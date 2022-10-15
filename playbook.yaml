@@ -1,0 +1,34 @@
+ - hosts: wordpress
+   gather_facts: False
+   become: yes
+
+   tasks:
+     - name: update repo
+       apt: update_cache=true cache_valid_time=3600
+       become: yes
+
+     - name: Install apache2
+       apt: name=apache2 update_cache=yes state=latest
+       become: yes
+
+     - name: Download & install wordpress
+       get_url:
+          url=https://www.wordpress.org/latest.tar.gz
+          dest=/home/ubuntu/wordpress.tar.gz
+          validate_certs=no
+
+     - name: untar
+       unarchive: src=/home/ubuntu/wordpress.tar.gz dest=/var/www/ copy=no
+       become: yes
+
+     - name: update site
+       become: yes
+       lineinfile:
+          dest=/etc/apache2/sites-enabled/000-default.conf
+          regexp="(.)+DocumentRoot /var/www/html"
+          line="DocumentRoot /var/www/wordpress"
+       
+     - name: Restart Apache
+       become: yes
+       service: name=apache2 state=restarted
+
